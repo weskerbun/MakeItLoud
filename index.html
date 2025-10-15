@@ -39,36 +39,39 @@
             });
 
             body.addEventListener('drop', async e => {
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-                if (!file.name.toLowerCase().endsWith('.mid') && 
-                    !file.name.toLowerCase().endsWith('.midi')) {
-                    return;
-                }
+                const files = Array.from(e.dataTransfer.files);
+                const midiFiles = files.filter(file =>
+                    file.name.toLowerCase().endsWith('.mid') ||
+                    file.name.toLowerCase().endsWith('.midi')
+                );
+                if (midiFiles.length === 0) return;
 
-                const ab = await file.arrayBuffer();
-                try {
-                    const midi = new Midi(ab);
-                    let count = 0;
-                    midi.tracks.forEach(track => {
-                        track.notes.forEach(note => {
-                            let newVel = note.velocity * 5; // increase by 500% here or whatever
-                            if (newVel > 1) newVel = 1;
-                            note.velocity = newVel;
-                            count++;
+                for (const file of midiFiles) {
+                    try {
+                        const ab = await file.arrayBuffer();
+                        const midi = new Midi(ab);
+                        midi.tracks.forEach(track => {
+                            track.notes.forEach(note => {
+                                let newVel = note.velocity * 5;
+                                if (newVel > 1) newVel = 1;
+                                note.velocity = newVel;
+                            });
                         });
-                    });
 
-                    const out = midi.toArray();
-                    const blob = new Blob([out], { type: 'audio/midi' });
-                    const url = URL.createObjectURL(blob);
+                        const out = midi.toArray();
+                        const blob = new Blob([out], { type: 'audio/midi' });
+                        const url = URL.createObjectURL(blob);
 
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = file.name.replace(/(\\.mid|\\.midi)$/i, '') + '_mil_boosted.mid';
-                    a.click();
-                } catch (err) {
-                    console.error(err);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = file.name.replace(/(\.mid|\.midi)$/i, '') + '_mil.mid';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }
             });
         </script>
