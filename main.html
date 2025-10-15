@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Make It Loud! MIDI Tool</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="./main.css">
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+            <text style="font-size: 100px;">MAKE IT LOUD!</text><br>
+            <text style="font-size: 24px;">Drop any midi files here to <strong>make them louder!</strong></text>
+
+            <br><br><br>
+
+            <text style="font-size: 20px;">Powered by <a href="https://github.com/Tonejs/Midi">@tonejs/midi</a>!</text>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.js"></script>
+        <script>
+            const body = document.body;
+
+            function log(msg) {
+                console.log(msg);
+            }
+
+            ['dragenter','dragover','dragleave','drop'].forEach(event => {
+                document.addEventListener(event, e => e.preventDefault(), false);
+            });
+
+            body.addEventListener('drop', async e => {
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                if (!file.name.toLowerCase().endsWith('.mid') && 
+                    !file.name.toLowerCase().endsWith('.midi')) {
+                    return;
+                }
+
+                const ab = await file.arrayBuffer();
+                try {
+                    const midi = new Midi(ab);
+                    let count = 0;
+                    midi.tracks.forEach(track => {
+                        track.notes.forEach(note => {
+                            let newVel = note.velocity * 5; // increase by 500% here or whatever
+                            if (newVel > 1) newVel = 1;
+                            note.velocity = newVel;
+                            count++;
+                        });
+                    });
+
+                    const out = midi.toArray();
+                    const blob = new Blob([out], { type: 'audio/midi' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name.replace(/(\\.mid|\\.midi)$/i, '') + '_mil_boosted.mid';
+                    a.click();
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+        </script>
+    </body>
+</html>
