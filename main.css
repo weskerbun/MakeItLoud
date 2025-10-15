@@ -18,7 +18,7 @@ html {
 
 @font-face {
     font-family: 'DarumadropOne';
-    src: url('darumadropone.ttf') format('truetype');
+    src: url('./DarumadropOne.ttf') format('truetype');
 }
 
 text {
